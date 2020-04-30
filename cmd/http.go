@@ -9,7 +9,7 @@ import (
 type Http struct {
 }
 
-func (h *Http) ServeHTTP(addr string) {
+func (h *Http) ServeHTTP(addr string) error {
 	hc := &healthchecks.Healthcheck{}
 	http.HandleFunc("/_meta/health", hc.HandleHeath)
 	http.HandleFunc("/_meta/ready", hc.HandleReady)
@@ -20,6 +20,8 @@ func (h *Http) ServeHTTP(addr string) {
 	if err != nil {
 		// TODO: make logging more sophisticated
 		fmt.Errorf("An error occured while starting HTTP server: %v", err)
-		return
+		return err
 	}
+
+	return nil
 }

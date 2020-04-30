@@ -1,0 +1,33 @@
+---
+# Example configuration file
+livenessProbe:
+  enabled: true
+  path: /_meta/health
+readinessProbe:
+  enabled: true
+  path: /_meta/ready
+broadcasts:
+  - source:
+      connectionString: amqp://user:secret@localhost:5672
+      exchange: MQ.Topic.Source.Exchange
+      routingKey: MQ.RoutingKey
+    destination:
+      connectionString: amqp://user:secret@localhost:35672
+      queues:
+        - name: MQ.Queue.Destination.Example.1
+          keepHeaders: true
+          arguments:
+            x-priority: "10"
+        - name: MQ.Queue.Destination.Example.2
+          keepHeaders: true
+        - name: MQ.Queue.Destination.Example.3
+          keepHeaders: false
+  - source:
+      connectionString: amqp://user:secret@localhost:35672
+      exchange: MQ.Topic.Source.Exchange
+      routingKey: MQ.RoutingKey
+    destination:
+      connectionString: amqp://user:secret@localhost:5672
+      queues:
+        - name: MQ.Queue.Destination.Example
+          keepHeaders: false
