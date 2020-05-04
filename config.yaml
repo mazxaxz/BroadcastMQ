@@ -1,5 +1,5 @@
 ---
-# Example configuration file
+# Example config file
 livenessProbe:
   enabled: true
   path: /_meta/health
@@ -13,21 +13,25 @@ broadcasts:
       routingKey: MQ.RoutingKey
     destination:
       connectionString: amqp://user:secret@localhost:35672
+      routingKey: MQ.APP.RoutingKey.Example.#
       queues:
         - name: MQ.Queue.Destination.Example.1
+          bindingKey: MQ.BindingKey.Example.1
           keepHeaders: true
           arguments:
             x-priority: "10"
         - name: MQ.Queue.Destination.Example.2
+          bindingKey: MQ.BindingKey.Example.2
           keepHeaders: true
         - name: MQ.Queue.Destination.Example.3
-          keepHeaders: false
+          bindingKey: MQ.BindingKey.Example.3
   - source:
       connectionString: amqp://user:secret@localhost:35672
       exchange: MQ.Topic.Source.Exchange
       routingKey: MQ.RoutingKey
     destination:
       connectionString: amqp://user:secret@localhost:5672
+      routingKey: MQ.APP.RoutingKey.Example
       queues:
         - name: MQ.Queue.Destination.Example
-          keepHeaders: false
+          bindingKey: MQ.BindingKey.Example

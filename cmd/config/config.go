@@ -1,4 +1,4 @@
-package configuration
+package config
 
 import (
 	"fmt"
@@ -33,18 +33,19 @@ type Source struct {
 
 type Destination struct {
 	ConnectionString string  `yaml:"connectionString"`
+	RoutingKey       string  `yaml:"routingKey"`
 	Queues           []Queue `yaml:"queues"`
 }
 
 type Queue struct {
 	Name        string            `yaml:"name"`
+	BindingKey  string            `yaml:"bindingKey"`
 	KeepHeaders bool              `yaml:"keepHeaders"`
 	Args        map[string]string `yaml:"arguments"`
 }
 
 func (cfg *Config) LoadConfiguration(path string) error {
 	if _, err := os.Stat(path); os.IsNotExist(err) {
-		fmt.Printf("File at path: '%s' does not exist and will be created", path)
 		mkdirErr := ensurePath(path, os.ModePerm)
 		if mkdirErr != nil {
 			return mkdirErr
@@ -53,15 +54,13 @@ func (cfg *Config) LoadConfiguration(path string) error {
 
 	file, err := os.OpenFile(path, os.O_RDONLY|os.O_CREATE, os.ModePerm)
 	if err != nil {
-		fmt.Errorf("File with path: '%s' could not be opened. Error: %v", path, err)
-		return err
+		return fmt.Errorf("File with path: '%s' could not be opened. Error: %v", path, err)
 	}
 	defer file.Close()
 
 	b, err := ioutil.ReadAll(file)
 	if err != nil {
-		fmt.Errorf("File with path: '%s' could not be read. Error: %v", path, err)
-		return err
+		return fmt.Errorf("File with path: '%s' could not be read. Error: %v", path, err)
 	}
 
 	if len(b) == 0 {
@@ -71,8 +70,7 @@ func (cfg *Config) LoadConfiguration(path string) error {
 
 	err = yaml.Unmarshal(b, cfg)
 	if err != nil {
-		fmt.Errorf("File with path: '%s' could parsed. Error: %v", path, err)
-		return err
+		return fmt.Errorf("File with path: '%s' could parsed. Error: %v", path, err)
 	}
 
 	return nil
@@ -115,8 +113,7 @@ func ensurePath(path string, perm os.FileMode) error {
 
 	err := os.MkdirAll(strings.Join(dirs, separator), perm)
 	if err != nil {
-		fmt.Errorf("Could not create directory: '%s'. Error: %v", path, err)
-		return err
+		return fmt.Errorf("Could not create directory: '%s'. Error: %v", path, err)
 	}
 
 	return nil
