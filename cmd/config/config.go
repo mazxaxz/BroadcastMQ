@@ -29,19 +29,20 @@ type Source struct {
 	ConnectionString string `yaml:"connectionString"`
 	Exchange         string `yaml:"exchange"`
 	RoutingKey       string `yaml:"routingKey"`
+	BmqQueueName     string `yaml:"bmqQueueName"`
 }
 
 type Destination struct {
-	ConnectionString string  `yaml:"connectionString"`
-	RoutingKey       string  `yaml:"routingKey"`
-	Queues           []Queue `yaml:"queues"`
+	ConnectionString string   `yaml:"connectionString"`
+	BmqExchange      string   `yaml:"bmqExcahnge"`
+	BmqRoutingKey    string   `yaml:"bmqRoutingKey"`
+	Queues           []Queue  `yaml:"queues"`
+	PersistHeaders   bool     `yaml:"persistHeaders"`
 }
 
 type Queue struct {
-	Name        string            `yaml:"name"`
-	BindingKey  string            `yaml:"bindingKey"`
-	KeepHeaders bool              `yaml:"keepHeaders"`
-	Args        map[string]string `yaml:"arguments"`
+	Name          string `yaml:"name"`
+	BmqBindingKey string `yaml:"bmqBindingKey"`
 }
 
 func (cfg *Config) LoadConfiguration(path string) error {

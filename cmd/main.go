@@ -35,9 +35,20 @@ func main() {
 		return
 	}
 
-	bmq := &broadcast.Broadcast{}
-	bmq.Initialize(config.Broadcasts)
+	http := &Http{
+		addr:      ":8080",
+		liveness:  &config.LivenessProbe,
+		readiness: &config.ReadinessProbe,
+		logger:    log,
+	}
+	http.ServeHTTP()
 
-	http := &Http{}
-	http.ServeHTTP(":8080", &config.LivenessProbe, &config.ReadinessProbe, log)
+	bmq := &broadcast.Broadcast{Config: config.Broadcasts}
+	err = bmq.Initialize()
+	if err != nil {
+		log.Fatal(err)
+	}
+	bmq.Start()
+
+	// TODO handle shutdown
 }

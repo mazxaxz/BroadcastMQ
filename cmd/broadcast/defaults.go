@@ -1,3 +1,8 @@
 package broadcast
 
-const BroadcastingExchange = "APP.E.Broadcasting.Topic"
+const (
+	DefaultBqExchange   = "APP.E.Broadcast.Topic"
+	DefaultBqQueue      = "APP.Q.Broadcast.Broker"
+	DefaultBqRoutingKey = "APP.Broker.#"
+	DefaultBqBindingKey = "APP.Broker.Default"
+)

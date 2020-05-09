@@ -11,15 +11,15 @@ broadcasts:
       connectionString: amqp://user:secret@localhost:5672
       exchange: MQ.Topic.Source.Exchange
       routingKey: MQ.RoutingKey
+      bmqQueueName: BMQ.Queue.Broadcaster.1
     destination:
       connectionString: amqp://user:secret@localhost:35672
-      routingKey: MQ.APP.RoutingKey.Example.#
+      bmqExchange: BMQ.Topic.Dest.Exchange
+      bmqRoutingKey: BMQ.APP.RoutingKey.Example.#
+      persistHeaders: true
       queues:
         - name: MQ.Queue.Destination.Example.1
-          bindingKey: MQ.BindingKey.Example.1
-          keepHeaders: true
-          arguments:
-            x-priority: "10"
+          bmqBindingKey: BMQ.BindingKey.Example.1
         - name: MQ.Queue.Destination.Example.2
           bindingKey: MQ.BindingKey.Example.2
           keepHeaders: true
@@ -31,7 +31,6 @@ broadcasts:
       routingKey: MQ.RoutingKey
     destination:
       connectionString: amqp://user:secret@localhost:5672
-      routingKey: MQ.APP.RoutingKey.Example
       queues:
         - name: MQ.Queue.Destination.Example
           bindingKey: MQ.BindingKey.Example

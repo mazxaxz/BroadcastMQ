@@ -9,22 +9,26 @@ import (
 )
 
 type Http struct {
+	addr      string
+	liveness  *config.Probe
+	readiness *config.Probe
+	logger    *logrus.Logger
 }
 
-func (h *Http) ServeHTTP(addr string, liveness *config.Probe, readiness *config.Probe, log *logrus.Logger) error {
+func (h *Http) ServeHTTP() error {
 	hc := &healthchecks.Healthcheck{}
-	if liveness.Enabled {
-		http.HandleFunc(liveness.Path, hc.HandleHeath)
+	if h.liveness.Enabled {
+		http.HandleFunc(h.liveness.Path, hc.HandleHeath)
 	}
-	if readiness.Enabled {
-		http.HandleFunc(readiness.Path, hc.HandleReady)
+	if h.readiness.Enabled {
+		http.HandleFunc(h.readiness.Path, hc.HandleReady)
 	}
 
-	log.WithFields(logrus.Fields{
-		"port": addr,
+	h.logger.WithFields(logrus.Fields{
+		"port": h.addr,
 	}).Info("Starting server API Server")
 
-	err := http.ListenAndServe(addr, nil)
+	err := http.ListenAndServe(h.addr, nil)
 	if err != nil {
 		return fmt.Errorf("An error occured while starting HTTP server: %v", err)
 	}
