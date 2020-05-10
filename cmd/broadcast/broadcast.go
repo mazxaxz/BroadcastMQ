@@ -1,9 +1,11 @@
 package broadcast
 
 import (
+	"context"
 	"fmt"
 	"github.com/mazxaxz/BroadcastMQ/cmd/config"
 	"github.com/mazxaxz/BroadcastMQ/pkg/rabbitmq"
+	"github.com/sirupsen/logrus"
 	"github.com/streadway/amqp"
 	"sync"
 )
@@ -11,49 +13,60 @@ import (
 type Broadcast struct {
 	Config  []config.Broadcast
 	clients map[string]*rabbitmq.Client
+	logger  *logrus.Logger
 }
 
-func (b *Broadcast) Initialize() error {
+func (b *Broadcast) Initialize(ctx context.Context, log *logrus.Logger) error {
 	b.clients = make(map[string]*rabbitmq.Client, 0)
+	b.logger = log
 
-	for _, broadcast := range b.Config {
-		cs := broadcast.Source.ConnectionString
-		if _, exists := b.clients[cs]; !exists {
-			client := rabbitmq.Client{ConnectionString: cs}
-			err := client.Connect()
-			if err != nil {
-				return fmt.Errorf("Could not connect: %v", err)
-			}
-
-			b.clients[cs] = &client
+	for _, bc := range b.Config {
+		client, err := b.addMqClient(ctx, bc.Source.ConnectionString)
+		if err != nil {
+			return err
 		}
 
-		cs = broadcast.Destination.ConnectionString
-		if _, exists := b.clients[cs]; !exists {
-			client := rabbitmq.Client{ConnectionString: cs}
-			err := client.Connect()
-			if err != nil {
-				return fmt.Errorf("Could not connect: %v", err)
-			}
+		// TODO
+		// bc.Source.BmqQueueName ?? DefaultBmqQueueName
+		// bc.Destination.BmqExchange ?? DefaultBmqExchange
+		// queue.BmqBindingKey ?? DefaultBmqBindingKey
 
-			b.clients[cs] = &client
+		client.CreateQueue(bc.Source.BmqQueueName, false, true, true)                 // TODO err
+		client.Bind(bc.Source.BmqQueueName, bc.Source.Exchange, bc.Source.RoutingKey) // TODO err
+		// TODO what if exchange does not exist
+
+		client, err = b.addMqClient(ctx, bc.Destination.ConnectionString)
+		if err != nil {
+			return err
+		}
+
+		client.CreateExchange(bc.Destination.BmqExchange, "topic", false, true) // TODO err
+		for _, queue := range bc.Destination.Queues {
+			// TODO what if queue does not exist
+			client.Bind(queue.Name, bc.Destination.BmqExchange, queue.BmqBindingKey) // TODO err
 		}
 	}
-
-	// TODO: bind queues
 
 	return nil
 }
 
-func (b *Broadcast) Dispose() {
-	// TODO
-	// disconnect consumers
-	// delete BMQ queues and exchanges
-	// close channels
-	// close connections
+func (b *Broadcast) addMqClient(ctx context.Context, cs string) (*rabbitmq.Client, error) {
+	var client *rabbitmq.Client
+	var err error
+
+	if _, exists := b.clients[cs]; !exists {
+		client, err = rabbitmq.NewClient(ctx, cs, b.logger)
+		if err != nil {
+			return nil, fmt.Errorf("Could not connect: %v", err)
+		}
+
+		b.clients[cs] = client
+	}
+
+	return client, nil
 }
 
-func (b *Broadcast) Start() {
+func (b *Broadcast) Start(ctx context.Context) {
 	var wg sync.WaitGroup
 	for _, broadcast := range b.Config {
 		wg.Add(1)
@@ -66,10 +79,10 @@ func (b *Broadcast) Start() {
 			}
 
 			if src, ok := b.clients[bc.Source.ConnectionString]; ok {
-				src.Consume(
-					queueName,
-					b.forward(bc.Destination),
-					)
+				err := src.Consume(ctx, queueName, b.forward(bc.Destination))
+				if err != nil {
+					b.logger.Error(err)
+				}
 			}
 		}(&broadcast)
 	}
@@ -99,8 +112,7 @@ func (b *Broadcast) forward(cfg config.Destination) func(msg amqp.Delivery) {
 			headers = msg.Headers
 		}
 
-		err := dest.Publish(exchange, routingKey, msg.Body, headers)
-		if err != nil {
+		if err := dest.Publish(exchange, routingKey, msg.Body, headers); err != nil {
 			// TODO handle
 		}
 	}

@@ -7,9 +7,9 @@ import (
 )
 
 type Settings struct {
-	ConfigPath  string `default:"/etc/broadcastmq/config.yaml"`
-	LogLevel    string `default:"info"`
-	OutputType  string `default:"text"`
+	ConfigPath string `default:"/etc/broadcastmq/config.yaml"`
+	LogLevel   string `default:"info"`
+	OutputType string `default:"text"`
 }
 
 func (s *Settings) LoadSettings() error {

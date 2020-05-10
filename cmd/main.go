@@ -1,10 +1,12 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"github.com/mazxaxz/BroadcastMQ/cmd/broadcast"
 	"github.com/mazxaxz/BroadcastMQ/cmd/config"
 	"github.com/mazxaxz/BroadcastMQ/cmd/environment"
+	"github.com/mazxaxz/BroadcastMQ/pkg/shutdown"
 	"github.com/sirupsen/logrus"
 	"os"
 )
@@ -43,12 +45,13 @@ func main() {
 	}
 	http.ServeHTTP()
 
+	ctx, cancel := context.WithCancel(context.Background())
+
 	bmq := &broadcast.Broadcast{Config: config.Broadcasts}
-	err = bmq.Initialize()
-	if err != nil {
+	if err = bmq.Initialize(ctx, log); err != nil {
 		log.Fatal(err)
 	}
-	bmq.Start()
+	bmq.Start(ctx)
 
-	// TODO handle shutdown
+	shutdown.GracefulShutdown(cancel)
 }

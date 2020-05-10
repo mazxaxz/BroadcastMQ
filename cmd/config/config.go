@@ -33,11 +33,11 @@ type Source struct {
 }
 
 type Destination struct {
-	ConnectionString string   `yaml:"connectionString"`
-	BmqExchange      string   `yaml:"bmqExcahnge"`
-	BmqRoutingKey    string   `yaml:"bmqRoutingKey"`
-	Queues           []Queue  `yaml:"queues"`
-	PersistHeaders   bool     `yaml:"persistHeaders"`
+	ConnectionString string  `yaml:"connectionString"`
+	BmqExchange      string  `yaml:"bmqExcahnge"`
+	BmqRoutingKey    string  `yaml:"bmqRoutingKey"`
+	Queues           []Queue `yaml:"queues"`
+	PersistHeaders   bool    `yaml:"persistHeaders"`
 }
 
 type Queue struct {
@@ -83,11 +83,11 @@ func (cfg *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	raw := rawConfig{
 		LivenessProbe: Probe{
 			Enabled: false,
-			Path: "/health",
+			Path:    "/health",
 		},
 		ReadinessProbe: Probe{
 			Enabled: false,
-			Path: "/ready",
+			Path:    "/ready",
 		},
 	}
 
