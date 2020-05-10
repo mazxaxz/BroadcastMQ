@@ -9,7 +9,7 @@ import (
 type Healthcheck struct {
 }
 
-func (hc *Healthcheck) HandleHeath(res http.ResponseWriter, _ *http.Request) {
+func (hc *Healthcheck) HandleHealth(res http.ResponseWriter, _ *http.Request) {
 	self, _ := os.Hostname()
 	as := &AppStatus{Host: self}
 	as.AddComponent(self, Ok)

@@ -10,15 +10,15 @@ import (
 
 type Http struct {
 	addr      string
-	liveness  *config.Probe
-	readiness *config.Probe
+	liveness  config.Probe
+	readiness config.Probe
 	logger    *logrus.Logger
 }
 
 func (h *Http) ServeHTTP() error {
 	hc := &healthchecks.Healthcheck{}
 	if h.liveness.Enabled {
-		http.HandleFunc(h.liveness.Path, hc.HandleHeath)
+		http.HandleFunc(h.liveness.Path, hc.HandleHealth)
 	}
 	if h.readiness.Enabled {
 		http.HandleFunc(h.readiness.Path, hc.HandleReady)

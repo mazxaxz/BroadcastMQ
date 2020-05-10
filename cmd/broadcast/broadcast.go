@@ -70,7 +70,7 @@ func (b *Broadcast) Start(ctx context.Context) {
 	var wg sync.WaitGroup
 	for _, broadcast := range b.Config {
 		wg.Add(1)
-		go func(bc *config.Broadcast) {
+		go func(bc config.Broadcast) {
 			defer wg.Done()
 
 			queueName := bc.Source.BmqQueueName
@@ -84,7 +84,7 @@ func (b *Broadcast) Start(ctx context.Context) {
 					b.logger.Error(err)
 				}
 			}
-		}(&broadcast)
+		}(broadcast)
 	}
 	wg.Wait()
 }

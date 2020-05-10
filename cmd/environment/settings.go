@@ -21,15 +21,16 @@ func (s *Settings) LoadSettings() error {
 	return nil
 }
 
-func (s *Settings) ConfigureLogging(log *logrus.Logger) {
-	log.SetLevel(s.getLogLevel())
-	if s.OutputType == "json" {
-		log.SetFormatter(&logrus.JSONFormatter{})
+func EncodeFormatter(outputType string) logrus.Formatter {
+	if outputType == "json" {
+		return &logrus.JSONFormatter{}
 	}
+
+	return &logrus.TextFormatter{}
 }
 
-func (s *Settings) getLogLevel() logrus.Level {
-	switch s.LogLevel {
+func EncodeLogLevel(level string) logrus.Level {
+	switch level {
 	case "trace":
 		return logrus.TraceLevel
 	case "debug":

@@ -15,7 +15,6 @@ var log = logrus.New()
 
 func main() {
 	log.Out = os.Stdout
-	log.SetLevel(logrus.InfoLevel)
 	fmt.Print(environment.LOGO)
 
 	settings := &environment.Settings{}
@@ -25,7 +24,8 @@ func main() {
 		return
 	}
 
-	settings.ConfigureLogging(log)
+	log.SetFormatter(environment.EncodeFormatter(settings.OutputType))
+	log.SetLevel(environment.EncodeLogLevel(settings.LogLevel))
 
 	config := &config.Config{}
 	err = config.LoadConfiguration(settings.ConfigPath)
@@ -39,8 +39,8 @@ func main() {
 
 	http := &Http{
 		addr:      ":8080",
-		liveness:  &config.LivenessProbe,
-		readiness: &config.ReadinessProbe,
+		liveness:  config.LivenessProbe,
+		readiness: config.ReadinessProbe,
 		logger:    log,
 	}
 	http.ServeHTTP()
