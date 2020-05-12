@@ -25,25 +25,16 @@ func (b *Broadcast) Initialize(ctx context.Context, log *logrus.Logger) error {
 		if err != nil {
 			return err
 		}
-
-		// TODO
-		// bc.Source.BmqQueueName ?? DefaultBmqQueueName
-		// bc.Destination.BmqExchange ?? DefaultBmqExchange
-		// queue.BmqBindingKey ?? DefaultBmqBindingKey
-
-		client.CreateQueue(bc.Source.BmqQueueName, false, true, true)                 // TODO err
-		client.Bind(bc.Source.BmqQueueName, bc.Source.Exchange, bc.Source.RoutingKey) // TODO err
-		// TODO what if exchange does not exist
+		if err = ensureSource(client, bc.Source); err != nil {
+			return err
+		}
 
 		client, err = b.addMqClient(ctx, bc.Destination.ConnectionString)
 		if err != nil {
 			return err
 		}
-
-		client.CreateExchange(bc.Destination.BmqExchange, "topic", false, true) // TODO err
-		for _, queue := range bc.Destination.Queues {
-			// TODO what if queue does not exist
-			client.Bind(queue.Name, bc.Destination.BmqExchange, queue.BmqBindingKey) // TODO err
+		if err = ensureDestination(client, bc.Destination); err != nil {
+			return err
 		}
 	}
 
@@ -66,6 +57,52 @@ func (b *Broadcast) addMqClient(ctx context.Context, cs string) (*rabbitmq.Clien
 	return client, nil
 }
 
+func ensureSource(c *rabbitmq.Client, src config.Source) error {
+	queueName := src.BmqQueueName
+	if queueName == "" {
+		queueName = DefaultBmqQueue
+	}
+
+	var err error
+	if err = c.CreateQueue(queueName, false, true, true); err != nil {
+		return fmt.Errorf("An error has occured while BMQ queue creation: %v", err)
+	}
+
+	if err = c.Bind(queueName, src.Exchange, src.RoutingKey); err != nil {
+		return fmt.Errorf("An error has occured while binding BMQ queue to the source Exchange: %v", err)
+	}
+
+	return nil
+}
+
+func ensureDestination(c *rabbitmq.Client, dest config.Destination) error {
+	exchange := dest.BmqExchange
+	if exchange == "" {
+		exchange = DefaultBmqExchange
+	}
+
+	if err := c.CreateExchange(exchange, "topic", false, true); err != nil {
+		return fmt.Errorf("An error has occured while BMQ destination Exchange creation: %v", err)
+	}
+
+	for _, queue := range dest.Queues {
+		if !queue.EnsureExists {
+			continue
+		}
+
+		bindingKey := queue.BmqBindingKey
+		if bindingKey == "" {
+			bindingKey = DefaultBmqBindingKey
+		}
+
+		if err := c.Bind(queue.Name, exchange, bindingKey); err != nil {
+			return fmt.Errorf("An error has occured while binding destination Queue to BMQ exchange: %v", err)
+		}
+	}
+
+	return nil
+}
+
 func (b *Broadcast) Start(ctx context.Context) {
 	var wg sync.WaitGroup
 	for _, broadcast := range b.Config {
@@ -75,7 +112,7 @@ func (b *Broadcast) Start(ctx context.Context) {
 
 			queueName := bc.Source.BmqQueueName
 			if queueName == "" {
-				queueName = DefaultBqQueue
+				queueName = DefaultBmqQueue
 			}
 
 			if src, ok := b.clients[bc.Source.ConnectionString]; ok {
@@ -94,12 +131,12 @@ func (b *Broadcast) forward(cfg config.Destination) func(msg amqp.Delivery) {
 
 	exchange := cfg.BmqExchange
 	if exchange == "" {
-		exchange = DefaultBqExchange
+		exchange = DefaultBmqExchange
 	}
 
 	routingKey := cfg.BmqRoutingKey
 	if routingKey == "" {
-		routingKey = DefaultBqRoutingKey
+		routingKey = DefaultBmqRoutingKey
 	}
 
 	return func(msg amqp.Delivery) {
@@ -113,7 +150,7 @@ func (b *Broadcast) forward(cfg config.Destination) func(msg amqp.Delivery) {
 		}
 
 		if err := dest.Publish(exchange, routingKey, msg.Body, headers); err != nil {
-			// TODO handle
+			return
 		}
 	}
 }

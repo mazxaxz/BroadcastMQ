@@ -28,12 +28,17 @@ func main() {
 	log.SetLevel(environment.EncodeLogLevel(settings.LogLevel))
 
 	config := &config.Config{}
-	err = config.LoadConfiguration(settings.ConfigPath)
-	if err != nil {
+	if err = config.LoadConfiguration(settings.ConfigPath); err != nil {
 		log.WithFields(logrus.Fields{
 			"config_file_path": settings.ConfigPath,
 		}).Fatal(err)
 
+		return
+	}
+
+	f, err := config.Validate()
+	if err != nil {
+		log.WithFields(f).Fatal(err)
 		return
 	}
 
@@ -53,5 +58,5 @@ func main() {
 	}
 	bmq.Start(ctx)
 
-	shutdown.GracefulShutdown(cancel)
+	shutdown.GracefulShutdown(cancel, log)
 }

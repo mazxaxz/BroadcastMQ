@@ -1,0 +1,18 @@
+---
+# Example config file
+livenessProbe:
+  enabled: true
+  path: /_meta/health
+readinessProbe:
+  enabled: true
+  path: /_meta/ready
+broadcasts:
+  - source:
+      connectionString: amqp://user:secret@localhost:5672
+      exchange: MQ.Topic.Source.Exchange
+      routingKey: MQ.RoutingKey
+    destination:
+      connectionString: amqp://user:secret@localhost:35672
+      persistHeaders: true
+      queues:
+        - name: MQ.Queue.Destination.Example.1

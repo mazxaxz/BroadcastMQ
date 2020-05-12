@@ -1,0 +1,25 @@
+version: '3.5'
+
+networks:
+  bmq-vn:
+    name: bmq-vn
+    driver: bridge
+
+services:
+  rabbitmq-one:
+    image: bitnami/rabbitmq:3.8.3-debian-10-r76
+    restart: on-failure
+    networks:
+      - bmq-vn
+    ports:
+      - 25672:15672
+      - 25673:5672
+
+  rabbitmq-two:
+    image: bitnami/rabbitmq:3.8.3-debian-10-r76
+    restart: on-failure
+    networks:
+      - bmq-vn
+    ports:
+      - 35672:15672
+      - 35673:5672

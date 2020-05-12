@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"os"
@@ -43,6 +44,7 @@ type Destination struct {
 type Queue struct {
 	Name          string `yaml:"name"`
 	BmqBindingKey string `yaml:"bmqBindingKey"`
+	EnsureExists  bool   `yaml:"ensureExists"`
 }
 
 func (cfg *Config) LoadConfiguration(path string) error {
@@ -77,6 +79,47 @@ func (cfg *Config) LoadConfiguration(path string) error {
 	return nil
 }
 
+func (cfg *Config) Validate() (logrus.Fields, error) {
+	if len(cfg.Broadcasts) == 0 {
+		return nil, nil
+	}
+
+	fields := make(logrus.Fields, 0)
+	for bcIdx, bc := range cfg.Broadcasts {
+		key := fmt.Sprintf("config.broadcasts[%v]", bcIdx)
+		if bc.Source.ConnectionString == "" {
+			fields[key + ".source.connectionString"] = "string"
+		}
+
+		if bc.Source.Exchange == "" {
+			fields[key + ".source.exchange"] = "string"
+		}
+
+		if bc.Source.RoutingKey == "" {
+			fields[key + ".source.routingKey"] = "string"
+		}
+
+		if bc.Destination.ConnectionString == "" {
+			fields[key + ".destination.connectionString"] = "string"
+		}
+
+		if len(bc.Destination.Queues) > 0 {
+			for qIdx, q := range bc.Destination.Queues {
+				qKey := fmt.Sprintf("%s.destination.queues[%v]", key, qIdx)
+				if q.Name == "" {
+					fields[qKey + ".name"] = "string"
+				}
+			}
+		}
+	}
+
+	if len(fields) == 0 {
+		return nil, nil
+	}
+
+	return fields, fmt.Errorf("Some fields are missing!")
+}
+
 // default config values
 func (cfg *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	type rawConfig Config
@@ -89,6 +132,7 @@ func (cfg *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
 			Enabled: false,
 			Path:    "/ready",
 		},
+		Broadcasts: make([]Broadcast, 0),
 	}
 
 	if err := unmarshal(&raw); err != nil {
