@@ -9,6 +9,9 @@ services:
   rabbitmq-one:
     image: bitnami/rabbitmq:3.8.3-debian-10-r76
     restart: on-failure
+    environment:
+      - RABBITMQ_USERNAME=user
+      - RABBITMQ_PASSWORD=secret
     networks:
       - bmq-vn
     ports:
@@ -18,6 +21,9 @@ services:
   rabbitmq-two:
     image: bitnami/rabbitmq:3.8.3-debian-10-r76
     restart: on-failure
+    environment:
+      - RABBITMQ_USERNAME=user
+      - RABBITMQ_PASSWORD=secret
     networks:
       - bmq-vn
     ports:

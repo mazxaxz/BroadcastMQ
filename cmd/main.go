@@ -35,6 +35,7 @@ func main() {
 
 		return
 	}
+	config.FillDefault()
 
 	f, err := config.Validate()
 	if err != nil {
@@ -48,15 +49,17 @@ func main() {
 		readiness: config.ReadinessProbe,
 		logger:    log,
 	}
-	http.ServeHTTP()
+	go http.ServeHTTP()
 
 	ctx, cancel := context.WithCancel(context.Background())
 
-	bmq := &broadcast.Broadcast{Config: config.Broadcasts}
-	if err = bmq.Initialize(ctx, log); err != nil {
-		log.Fatal(err)
-	}
-	bmq.Start(ctx)
+	go func(c context.Context) {
+		bmq := &broadcast.Broadcast{Config: config.Broadcasts}
+		if err = bmq.Initialize(c, log); err != nil {
+			log.Fatal(err)
+		}
+		bmq.Start()
+	}(ctx)
 
 	shutdown.GracefulShutdown(cancel, log)
 }

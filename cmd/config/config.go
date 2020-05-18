@@ -120,7 +120,28 @@ func (cfg *Config) Validate() (logrus.Fields, error) {
 	return fields, fmt.Errorf("Some fields are missing!")
 }
 
-// default config values
+func (cfg *Config) FillDefault() {
+	for i := range cfg.Broadcasts {
+		if cfg.Broadcasts[i].Source.BmqQueueName == "" {
+			cfg.Broadcasts[i].Source.BmqQueueName = DefaultBmqQueue
+		}
+
+		if cfg.Broadcasts[i].Destination.BmqRoutingKey == "" {
+			cfg.Broadcasts[i].Destination.BmqRoutingKey = DefaultBmqRoutingKey
+		}
+
+		if cfg.Broadcasts[i].Destination.BmqExchange == "" {
+			cfg.Broadcasts[i].Destination.BmqExchange = DefaultBmqExchange
+		}
+
+		for qi := range cfg.Broadcasts[i].Destination.Queues {
+			if cfg.Broadcasts[i].Destination.Queues[qi].BmqBindingKey == "" {
+				cfg.Broadcasts[i].Destination.Queues[qi].BmqBindingKey = DefaultBmqBindingKey
+			}
+		}
+	}
+}
+
 func (cfg *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	type rawConfig Config
 	raw := rawConfig{

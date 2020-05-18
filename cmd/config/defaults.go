@@ -1,4 +1,4 @@
-package broadcast
+package config
 
 const (
 	DefaultBmqExchange   = "BMQ.E.Broadcast.Topic"

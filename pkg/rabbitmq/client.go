@@ -10,52 +10,40 @@ import (
 
 type Client struct {
 	connection *amqp.Connection
-	done       chan error
 	logger     *logrus.Logger
 }
 
 func NewClient(ctx context.Context, uri string, log *logrus.Logger) (*Client, error) {
-	c := Client{
+	client := Client{
 		connection: nil,
-		done:       make(chan error),
 		logger:     log,
 	}
 
 	var err error
-	c.connection, err = amqp.Dial(uri)
+	client.connection, err = amqp.Dial(uri)
 	if err != nil {
 		return nil, fmt.Errorf("Could not establish connection with RabbitMQ: %v", err)
 	}
 
-	go func(client *Client) {
+	go func(c *Client) {
 		for {
 			select {
-			case _ <- ctx.Done():
-				if e := client.shutdown(); e != nil {
-					client.logger.Error(e)
+			case <- ctx.Done():
+				if e := c.connection.Close(); e != nil {
+					c.logger.Error(e)
 				}
 				return
-			case _ <- c.connection.NotifyClose(make(chan *amqp.Error)):
-				client.logger.Infof("Closed because of AMQP.")
+			case <- c.connection.NotifyClose(make(chan *amqp.Error)):
+				c.logger.Infof("Closed because of AMQP.")
 				return
 			}
 		}
-	}(&c)
+	}(&client)
 
-	return &c, nil
+	return &client, nil
 }
 
-func (c *Client) shutdown() error {
-	c.logger.Infof("Shutting down connection")
-
-	if err := c.connection.Close(); err != nil {
-		return fmt.Errorf("Could not close connection: %v", err)
-	}
-
-	return <-c.done
-}
-
-func (c *Client) Consume(ctx context.Context, queueName string, callback func(delivery amqp.Delivery)) error {
+func (c *Client) Consume(queueName string, callback func(delivery amqp.Delivery)) error {
 	// TODO: create channel pool
 
 	ch, err := c.connection.Channel()
@@ -78,7 +66,11 @@ func (c *Client) Consume(ctx context.Context, queueName string, callback func(de
 		return fmt.Errorf("Could not subscribe to queue: %v", err)
 	}
 
-	go handle(ctx, messages, c.done, callback)
+	go func() {
+		for d := range messages {
+			go callback(d)
+		}
+	}()
 
 	return nil
 }
@@ -106,17 +98,4 @@ func (c *Client) Publish(ex, key string, body []byte, headers map[string]interfa
 	}
 
 	return nil
-}
-
-func handle(ctx context.Context, messages <-chan amqp.Delivery, done chan error, cb func(delivery amqp.Delivery)) {
-	for d := range messages {
-		select {
-		case _ <- ctx.Done():
-			done <- nil
-			return
-		default:
-			cb(d)
-		}
-	}
-	done <- nil
 }

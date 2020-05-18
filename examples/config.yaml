@@ -8,11 +8,12 @@ readinessProbe:
   path: /_meta/ready
 broadcasts:
   - source:
-      connectionString: amqp://user:secret@localhost:5672
+      connectionString: amqp://user:secret@localhost:25673
       exchange: MQ.Topic.Source.Exchange
       routingKey: MQ.RoutingKey
     destination:
-      connectionString: amqp://user:secret@localhost:35672
+      connectionString: amqp://user:secret@localhost:35673
       persistHeaders: true
       queues:
         - name: MQ.Queue.Destination.Example.1
+          ensureExists: true
