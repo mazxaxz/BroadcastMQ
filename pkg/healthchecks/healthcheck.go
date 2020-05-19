@@ -6,10 +6,8 @@ import (
 	"os"
 )
 
-type Healthcheck struct {
-}
-
-func (hc *Healthcheck) HandleHealth(res http.ResponseWriter, _ *http.Request) {
+// HandleHealth liveness probe handler
+func HandleHealth(res http.ResponseWriter, _ *http.Request) {
 	self, _ := os.Hostname()
 	as := &AppStatus{Host: self}
 	as.AddComponent(self, Ok)
@@ -29,12 +27,11 @@ func (hc *Healthcheck) HandleHealth(res http.ResponseWriter, _ *http.Request) {
 	res.Write(data)
 }
 
-func (hc *Healthcheck) HandleReady(res http.ResponseWriter, _ *http.Request) {
+// HandleReady readiness probe handler
+func HandleReady(res http.ResponseWriter, _ *http.Request) {
 	self, _ := os.Hostname()
 	as := &AppStatus{Host: self}
 	as.AddComponent(self, Ok)
-
-	// TODO: add broadcasters
 
 	code := http.StatusOK
 	if as.IsAnyUnhealthy() {

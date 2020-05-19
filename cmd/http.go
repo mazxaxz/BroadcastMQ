@@ -15,21 +15,20 @@ type Http struct {
 	logger    *logrus.Logger
 }
 
+// ServeHTTP runs http server w(/o) liveness probes
 func (h *Http) ServeHTTP() error {
-	hc := &healthchecks.Healthcheck{}
 	if h.liveness.Enabled {
-		http.HandleFunc(h.liveness.Path, hc.HandleHealth)
+		http.HandleFunc(h.liveness.Path, healthchecks.HandleHealth)
 	}
 	if h.readiness.Enabled {
-		http.HandleFunc(h.readiness.Path, hc.HandleReady)
+		http.HandleFunc(h.readiness.Path, healthchecks.HandleReady)
 	}
 
 	h.logger.WithFields(logrus.Fields{
 		"port": h.addr,
 	}).Info("Starting server API Server")
 
-	err := http.ListenAndServe(h.addr, nil)
-	if err != nil {
+	if err := http.ListenAndServe(h.addr, nil); err != nil {
 		return fmt.Errorf("An error occured while starting HTTP server: %v", err)
 	}
 

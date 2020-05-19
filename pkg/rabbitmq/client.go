@@ -11,8 +11,10 @@ import (
 type Client struct {
 	connection *amqp.Connection
 	logger     *logrus.Logger
+	pool 	   *channelPool
 }
 
+// NewClient creates new RabbitMQ client
 func NewClient(ctx context.Context, uri string, log *logrus.Logger) (*Client, error) {
 	client := Client{
 		connection: nil,
@@ -25,32 +27,18 @@ func NewClient(ctx context.Context, uri string, log *logrus.Logger) (*Client, er
 		return nil, fmt.Errorf("Could not establish connection with RabbitMQ: %v", err)
 	}
 
-	go func(c *Client) {
-		for {
-			select {
-			case <- ctx.Done():
-				if e := c.connection.Close(); e != nil {
-					c.logger.Error(e)
-				}
-				return
-			case <- c.connection.NotifyClose(make(chan *amqp.Error)):
-				c.logger.Infof("Closed because of AMQP.")
-				return
-			}
-		}
-	}(&client)
+	client.pool = newChannelPool(ctx, client.connection, 10, 10)
 
+	go disposeClient(ctx, &client)
 	return &client, nil
 }
 
+// Consume subscribes to given queue
 func (c *Client) Consume(queueName string, callback func(delivery amqp.Delivery)) error {
-	// TODO: create channel pool
-
-	ch, err := c.connection.Channel()
+	ch, err := c.pool.get(c.connection)
 	if err != nil {
 		return fmt.Errorf("Could not establish channel connection: %v", err)
 	}
-	defer ch.Close()
 
 	consumerName := ksuid.New().String() + ".BroadcastMQ"
 	messages, err := ch.Consume(
@@ -75,14 +63,13 @@ func (c *Client) Consume(queueName string, callback func(delivery amqp.Delivery)
 	return nil
 }
 
+// Publish sends payload to given exchange
 func (c *Client) Publish(ex, key string, body []byte, headers map[string]interface{}) error {
-	// TODO channel pool
-
-	ch, err := c.connection.Channel()
+	ch, err := c.pool.get(c.connection)
 	if err != nil {
 		return fmt.Errorf("Could not establish channel connection: %v", err)
 	}
-	defer ch.Close()
+	defer c.pool.release(ch)
 
 	err = ch.Publish(
 		ex,    // exchange
@@ -98,4 +85,19 @@ func (c *Client) Publish(ex, key string, body []byte, headers map[string]interfa
 	}
 
 	return nil
+}
+
+func disposeClient(ctx context.Context, c *Client) {
+	for {
+		select {
+		case <- ctx.Done():
+			if e := c.connection.Close(); e != nil {
+				c.logger.Error(e)
+			}
+			return
+		case <- c.connection.NotifyClose(make(chan *amqp.Error)):
+			c.logger.Infof("Closed because of AMQP.")
+			return
+		}
+	}
 }

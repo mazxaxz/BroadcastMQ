@@ -8,6 +8,7 @@ import (
 	"syscall"
 )
 
+// GracefulShutdown makes sure that all resources are disposed correctly
 func GracefulShutdown(cancel context.CancelFunc, logger *logrus.Logger) {
 	termChan := make(chan os.Signal)
 	signal.Notify(termChan, syscall.SIGINT, syscall.SIGTERM)

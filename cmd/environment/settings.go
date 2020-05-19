@@ -12,6 +12,7 @@ type Settings struct {
 	OutputType string `default:"text"`
 }
 
+// LoadSettings loads environment variables into application runtime
 func (s *Settings) LoadSettings() error {
 	err := envconfig.Process("BMQ", s)
 	if err != nil {
@@ -21,6 +22,7 @@ func (s *Settings) LoadSettings() error {
 	return nil
 }
 
+// EncodeFormatter encodes formatter type from environment string
 func EncodeFormatter(outputType string) logrus.Formatter {
 	if outputType == "json" {
 		return &logrus.JSONFormatter{}
@@ -29,6 +31,7 @@ func EncodeFormatter(outputType string) logrus.Formatter {
 	return &logrus.TextFormatter{}
 }
 
+// EncodeLogLevel encodes log level from environment string
 func EncodeLogLevel(level string) logrus.Level {
 	switch level {
 	case "trace":

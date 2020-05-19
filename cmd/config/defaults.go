@@ -1,8 +1,8 @@
 package config
 
 const (
-	DefaultBmqExchange   = "BMQ.E.Broadcast.Topic"
-	DefaultBmqQueue      = "BMQ.Q.Broadcast.Broker"
-	DefaultBmqRoutingKey = "BMQ.Broker.#"
-	DefaultBmqBindingKey = "BMQ.Broker.Default"
+	DefaultBMQExchange   = "BMQ.E.Broadcast.Topic"
+	DefaultBMQQueue      = "BMQ.Q.Broadcast.Broker"
+	DefaultBMQRoutingKey = "BMQ.Broker.Default"
+	DefaultBMQBindingKey = "BMQ.Broker.#"
 )

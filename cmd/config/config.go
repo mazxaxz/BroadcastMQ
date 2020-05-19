@@ -30,23 +30,24 @@ type Source struct {
 	ConnectionString string `yaml:"connectionString"`
 	Exchange         string `yaml:"exchange"`
 	RoutingKey       string `yaml:"routingKey"`
-	BmqQueueName     string `yaml:"bmqQueueName"`
+	BMQQueueName     string `yaml:"bmqQueueName"`
 }
 
 type Destination struct {
 	ConnectionString string  `yaml:"connectionString"`
-	BmqExchange      string  `yaml:"bmqExcahnge"`
-	BmqRoutingKey    string  `yaml:"bmqRoutingKey"`
+	BMQExchange      string  `yaml:"bmqExcahnge"`
+	BMQRoutingKey    string  `yaml:"bmqRoutingKey"`
 	Queues           []Queue `yaml:"queues"`
 	PersistHeaders   bool    `yaml:"persistHeaders"`
 }
 
 type Queue struct {
 	Name          string `yaml:"name"`
-	BmqBindingKey string `yaml:"bmqBindingKey"`
+	BMQBindingKey string `yaml:"bmqBindingKey"`
 	EnsureExists  bool   `yaml:"ensureExists"`
 }
 
+// LoadConfiguration loads variables from YAML file
 func (cfg *Config) LoadConfiguration(path string) error {
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		mkdirErr := ensurePath(path, os.ModePerm)
@@ -79,6 +80,7 @@ func (cfg *Config) LoadConfiguration(path string) error {
 	return nil
 }
 
+// Validate makes sure that configuration is valid
 func (cfg *Config) Validate() (logrus.Fields, error) {
 	if len(cfg.Broadcasts) == 0 {
 		return nil, nil
@@ -120,23 +122,24 @@ func (cfg *Config) Validate() (logrus.Fields, error) {
 	return fields, fmt.Errorf("Some fields are missing!")
 }
 
+// FillDefault makes sure that optional values are filled
 func (cfg *Config) FillDefault() {
 	for i := range cfg.Broadcasts {
-		if cfg.Broadcasts[i].Source.BmqQueueName == "" {
-			cfg.Broadcasts[i].Source.BmqQueueName = DefaultBmqQueue
+		if cfg.Broadcasts[i].Source.BMQQueueName == "" {
+			cfg.Broadcasts[i].Source.BMQQueueName = DefaultBMQQueue
 		}
 
-		if cfg.Broadcasts[i].Destination.BmqRoutingKey == "" {
-			cfg.Broadcasts[i].Destination.BmqRoutingKey = DefaultBmqRoutingKey
+		if cfg.Broadcasts[i].Destination.BMQRoutingKey == "" {
+			cfg.Broadcasts[i].Destination.BMQRoutingKey = DefaultBMQRoutingKey
 		}
 
-		if cfg.Broadcasts[i].Destination.BmqExchange == "" {
-			cfg.Broadcasts[i].Destination.BmqExchange = DefaultBmqExchange
+		if cfg.Broadcasts[i].Destination.BMQExchange == "" {
+			cfg.Broadcasts[i].Destination.BMQExchange = DefaultBMQExchange
 		}
 
 		for qi := range cfg.Broadcasts[i].Destination.Queues {
-			if cfg.Broadcasts[i].Destination.Queues[qi].BmqBindingKey == "" {
-				cfg.Broadcasts[i].Destination.Queues[qi].BmqBindingKey = DefaultBmqBindingKey
+			if cfg.Broadcasts[i].Destination.Queues[qi].BMQBindingKey == "" {
+				cfg.Broadcasts[i].Destination.Queues[qi].BMQBindingKey = DefaultBMQBindingKey
 			}
 		}
 	}

@@ -16,6 +16,7 @@ type Broadcast struct {
 	logger  *logrus.Logger
 }
 
+// Initialize makes sure MQ clients are connected and source/destination resources are present
 func (b *Broadcast) Initialize(ctx context.Context, log *logrus.Logger) error {
 	b.clients = make(map[string]*rabbitmq.Client, 0)
 	b.logger = log
@@ -59,11 +60,11 @@ func (b *Broadcast) addMqClient(ctx context.Context, cs string) (*rabbitmq.Clien
 
 func ensureSource(c *rabbitmq.Client, src config.Source) error {
 	var err error
-	if err = c.CreateQueue(src.BmqQueueName, true, false, true); err != nil {
+	if err = c.CreateQueue(src.BMQQueueName, true, false, true); err != nil {
 		return fmt.Errorf("An error has occured while BMQ queue creation: %v", err)
 	}
 
-	if err = c.Bind(src.BmqQueueName, src.Exchange, src.RoutingKey); err != nil {
+	if err = c.Bind(src.BMQQueueName, src.Exchange, src.RoutingKey); err != nil {
 		return fmt.Errorf("An error has occured while binding BMQ queue to the source Exchange: %v", err)
 	}
 
@@ -71,7 +72,7 @@ func ensureSource(c *rabbitmq.Client, src config.Source) error {
 }
 
 func ensureDestination(c *rabbitmq.Client, dest config.Destination) error {
-	if err := c.CreateExchange(dest.BmqExchange, "topic", false, true); err != nil {
+	if err := c.CreateExchange(dest.BMQExchange, "topic", false, true); err != nil {
 		return fmt.Errorf("An error has occured while BMQ destination Exchange creation: %v", err)
 	}
 
@@ -82,7 +83,7 @@ func ensureDestination(c *rabbitmq.Client, dest config.Destination) error {
 			}
 		}
 
-		if err := c.Bind(queue.Name, dest.BmqExchange, queue.BmqBindingKey); err != nil {
+		if err := c.Bind(queue.Name, dest.BMQExchange, queue.BMQBindingKey); err != nil {
 			return fmt.Errorf("An error has occured while binding destination Queue to BMQ exchange: %v", err)
 		}
 	}
@@ -90,6 +91,7 @@ func ensureDestination(c *rabbitmq.Client, dest config.Destination) error {
 	return nil
 }
 
+// Start begins broadcasting
 func (b *Broadcast) Start() {
 	var wg sync.WaitGroup
 	for _, broadcast := range b.Config {
@@ -98,10 +100,9 @@ func (b *Broadcast) Start() {
 			defer wg.Done()
 
 			if src, ok := b.clients[bc.Source.ConnectionString]; ok {
-				b.logger.Infof("Started broadcasting, src: '%s', RK: '%s'", bc.Source.Exchange, bc.Destination.BmqRoutingKey)
+				b.logger.Infof("Started broadcasting, '%s' === '%s' ===> *", bc.Source.Exchange, bc.Destination.BMQRoutingKey)
 
-				err := src.Consume(bc.Source.BmqQueueName, b.forward(bc.Destination))
-				if err != nil {
+				if err := src.Consume(bc.Source.BMQQueueName, b.forward(bc.Destination)); err != nil {
 					b.logger.Error(err)
 				}
 			}
@@ -123,7 +124,7 @@ func (b *Broadcast) forward(cfg config.Destination) func(msg amqp.Delivery) {
 			headers = msg.Headers
 		}
 
-		if err := dest.Publish(cfg.BmqExchange, cfg.BmqRoutingKey, msg.Body, headers); err != nil {
+		if err := dest.Publish(cfg.BMQExchange, cfg.BMQRoutingKey, msg.Body, headers); err != nil {
 			return
 		}
 	}

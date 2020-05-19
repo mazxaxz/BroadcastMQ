@@ -1,11 +1,14 @@
 package rabbitmq
 
+// CreateExchange makes sure that given exchange is created
 func (c *Client) CreateExchange(exchange, kind string, durable, autoDelete bool) error {
-	// TODO channel pool
-	ch, _ := c.connection.Channel()
-	defer ch.Close()
+	ch, err := c.pool.get(c.connection)
+	if err != nil {
+		return err
+	}
+	defer c.pool.release(ch)
 
-	err := ch.ExchangeDeclare(exchange, kind, durable, autoDelete, false, false, nil)
+	err = ch.ExchangeDeclare(exchange, kind, durable, autoDelete, false, false, nil)
 	if err != nil {
 		return err
 	}
@@ -13,26 +16,30 @@ func (c *Client) CreateExchange(exchange, kind string, durable, autoDelete bool)
 	return nil
 }
 
+// CreateQueue makes sure that given queue is created
 func (c *Client) CreateQueue(queue string, durable, autoDelete, exclusive bool) error {
-	// TODO channel pool
-	ch, _ := c.connection.Channel()
-	defer ch.Close()
-
-	_, err := ch.QueueDeclare(queue, durable, autoDelete, exclusive, false, nil)
+	ch, err := c.pool.get(c.connection)
 	if err != nil {
+		return err
+	}
+	defer c.pool.release(ch)
+
+	if _, err = ch.QueueDeclare(queue, durable, autoDelete, exclusive, false, nil); err != nil {
 		return err
 	}
 
 	return nil
 }
 
+// Bind makes sure that queue and exchange are linked
 func (c *Client) Bind(queue, exchange, bindingKey string) error {
-	// TODO channel pool
-	ch, _ := c.connection.Channel()
-	defer ch.Close()
-
-	err := ch.QueueBind(queue, bindingKey, exchange, false, nil)
+	ch, err := c.pool.get(c.connection)
 	if err != nil {
+		return err
+	}
+	defer c.pool.release(ch)
+
+	if err = ch.QueueBind(queue, bindingKey, exchange, false, nil); err != nil {
 		return err
 	}
 

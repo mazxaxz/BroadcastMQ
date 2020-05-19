@@ -10,6 +10,7 @@ type AppStatusComponent struct {
 	Status HealthStatus `json:"status"`
 }
 
+// AddComponent adds new component to hc registry
 func (as *AppStatus) AddComponent(name string, status HealthStatus) {
 	if as.Components == nil {
 		as.Components = make([]*AppStatusComponent, 0)
@@ -18,6 +19,7 @@ func (as *AppStatus) AddComponent(name string, status HealthStatus) {
 	as.Components = append(as.Components, &AppStatusComponent{name, status})
 }
 
+// IsAnyUnhealthy returns true if any component is unhealthy
 func (as *AppStatus) IsAnyUnhealthy() bool {
 	if as.Components == nil {
 		return true
