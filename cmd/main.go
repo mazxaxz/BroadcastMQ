@@ -21,7 +21,6 @@ func main() {
 	err := settings.LoadSettings()
 	if err != nil {
 		log.Fatal(err)
-		return
 	}
 
 	log.SetFormatter(environment.EncodeFormatter(settings.OutputType))
@@ -32,16 +31,12 @@ func main() {
 		log.WithFields(logrus.Fields{
 			"config_file_path": settings.ConfigPath,
 		}).Fatal(err)
+	}
 
-		return
+	if err = config.Validate(); err != nil {
+		log.Fatal(err)
 	}
 	config.FillDefault()
-
-	f, err := config.Validate()
-	if err != nil {
-		log.WithFields(f).Fatal(err)
-		return
-	}
 
 	http := &Http{
 		addr:      ":8080",

@@ -8,14 +8,14 @@ import (
 
 type channelPool struct {
 	sync.RWMutex
-	channels  []*amqp.Channel
-	poolSize  int
-	prefetch  int
+	channels []*amqp.Channel
+	poolSize int
+	prefetch int
 }
 
 func newChannelPool(ctx context.Context, connection *amqp.Connection, poolSize int, prefetch int) *channelPool {
 	pool := channelPool{
-		channels: make([]*amqp.Channel, 0, poolSize + 10),
+		channels: make([]*amqp.Channel, 0, poolSize+10),
 		poolSize: poolSize,
 		prefetch: prefetch,
 	}

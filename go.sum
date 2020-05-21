@@ -1,4 +1,7 @@
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
+github.com/guiferpa/gody v1.1.0 h1:Z27J1+7zEHt3JRpa09MemaOIiJlpxqOCEMdo8r+y5Vc=
+github.com/guiferpa/gody/v2 v2.0.0 h1:HtL0d7rBnTMz7ATkuocuApbWDe4wUGMHYOWHSsD2J1Q=
+github.com/guiferpa/gody/v2 v2.0.0/go.mod h1:He6ouILg9yFqjLge33cz36PUzuafGcCgaREQ3qoSUW0=
 github.com/kelseyhightower/envconfig v1.4.0 h1:Im6hONhd3pLkfDFsbRgu68RDNkGF1r3dvMUtDTo2cv8=
 github.com/kelseyhightower/envconfig v1.4.0/go.mod h1:cccZRl6mQpaq41TPp5QxidR+Sa3axMbJDNb//FQX6Gg=
 github.com/konsorten/go-windows-terminal-sequences v1.0.3 h1:CE8S1cTafDpPvMhIxNJKvHsGVBgn1xWYf1NbHQhywc8=

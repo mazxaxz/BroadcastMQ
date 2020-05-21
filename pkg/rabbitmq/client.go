@@ -11,11 +11,11 @@ import (
 type Client struct {
 	connection *amqp.Connection
 	logger     *logrus.Logger
-	pool 	   *channelPool
+	pool       *channelPool
 }
 
 // NewClient creates new RabbitMQ client
-func NewClient(ctx context.Context, uri string, log *logrus.Logger) (*Client, error) {
+func NewClient(ctx context.Context, uri string, log *logrus.Logger) (Client, error) {
 	client := Client{
 		connection: nil,
 		logger:     log,
@@ -24,13 +24,13 @@ func NewClient(ctx context.Context, uri string, log *logrus.Logger) (*Client, er
 	var err error
 	client.connection, err = amqp.Dial(uri)
 	if err != nil {
-		return nil, fmt.Errorf("Could not establish connection with RabbitMQ: %v", err)
+		return client, fmt.Errorf("Could not establish connection with RabbitMQ: %v", err)
 	}
 
 	client.pool = newChannelPool(ctx, client.connection, 10, 10)
 
-	go disposeClient(ctx, &client)
-	return &client, nil
+	go disposeClient(ctx, client)
+	return client, nil
 }
 
 // Consume subscribes to given queue
@@ -87,15 +87,15 @@ func (c *Client) Publish(ex, key string, body []byte, headers map[string]interfa
 	return nil
 }
 
-func disposeClient(ctx context.Context, c *Client) {
+func disposeClient(ctx context.Context, c Client) {
 	for {
 		select {
-		case <- ctx.Done():
+		case <-ctx.Done():
 			if e := c.connection.Close(); e != nil {
 				c.logger.Error(e)
 			}
 			return
-		case <- c.connection.NotifyClose(make(chan *amqp.Error)):
+		case <-c.connection.NotifyClose(make(chan *amqp.Error)):
 			c.logger.Infof("Closed because of AMQP.")
 			return
 		}

@@ -2,7 +2,8 @@ package config
 
 import (
 	"fmt"
-	"github.com/sirupsen/logrus"
+	"github.com/guiferpa/gody/v2"
+	"github.com/guiferpa/gody/v2/rule"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"os"
@@ -27,14 +28,14 @@ type Broadcast struct {
 }
 
 type Source struct {
-	ConnectionString string `yaml:"connectionString"`
-	Exchange         string `yaml:"exchange"`
-	RoutingKey       string `yaml:"routingKey"`
+	ConnectionString string `yaml:"connectionString" validate:"not_empty"`
+	Exchange         string `yaml:"exchange" validate:"not_empty"`
+	RoutingKey       string `yaml:"routingKey" validate:"not_empty"`
 	BMQQueueName     string `yaml:"bmqQueueName"`
 }
 
 type Destination struct {
-	ConnectionString string  `yaml:"connectionString"`
+	ConnectionString string  `yaml:"connectionString" validate:"not_empty"`
 	BMQExchange      string  `yaml:"bmqExcahnge"`
 	BMQRoutingKey    string  `yaml:"bmqRoutingKey"`
 	Queues           []Queue `yaml:"queues"`
@@ -42,7 +43,7 @@ type Destination struct {
 }
 
 type Queue struct {
-	Name          string `yaml:"name"`
+	Name          string `yaml:"name" validate:"not_empty"`
 	BMQBindingKey string `yaml:"bmqBindingKey"`
 	EnsureExists  bool   `yaml:"ensureExists"`
 }
@@ -81,45 +82,17 @@ func (cfg *Config) LoadConfiguration(path string) error {
 }
 
 // Validate makes sure that configuration is valid
-func (cfg *Config) Validate() (logrus.Fields, error) {
-	if len(cfg.Broadcasts) == 0 {
-		return nil, nil
+func (cfg *Config) Validate() error {
+	validator := gody.NewValidator()
+
+	rules := []gody.Rule{rule.NotEmpty}
+	validator.AddRules(rules...)
+
+	if _, err := validator.Validate(*cfg); err != nil {
+		return err
 	}
 
-	fields := make(logrus.Fields, 0)
-	for bcIdx, bc := range cfg.Broadcasts {
-		key := fmt.Sprintf("config.broadcasts[%v]", bcIdx)
-		if bc.Source.ConnectionString == "" {
-			fields[key + ".source.connectionString"] = "string"
-		}
-
-		if bc.Source.Exchange == "" {
-			fields[key + ".source.exchange"] = "string"
-		}
-
-		if bc.Source.RoutingKey == "" {
-			fields[key + ".source.routingKey"] = "string"
-		}
-
-		if bc.Destination.ConnectionString == "" {
-			fields[key + ".destination.connectionString"] = "string"
-		}
-
-		if len(bc.Destination.Queues) > 0 {
-			for qIdx, q := range bc.Destination.Queues {
-				qKey := fmt.Sprintf("%s.destination.queues[%v]", key, qIdx)
-				if q.Name == "" {
-					fields[qKey + ".name"] = "string"
-				}
-			}
-		}
-	}
-
-	if len(fields) == 0 {
-		return nil, nil
-	}
-
-	return fields, fmt.Errorf("Some fields are missing!")
+	return nil
 }
 
 // FillDefault makes sure that optional values are filled
