@@ -6,6 +6,22 @@ networks:
     driver: bridge
 
 services:
+  broadcast-mq:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    restart: on-failure
+    environment:
+      - BMQ_CONFIGPATH=/etc/broadcastmq/config.yaml
+      - BMQ_LOGLEVEL=info
+      - BMQ_OUTPUTTYPE=text
+    volumes:
+      - ./config.yaml:/etc/broadcastmq/conifg.yaml:ro
+    networks:
+      - bmq-vn
+    ports:
+      - 9090:8080
+
   rabbitmq-one:
     image: bitnami/rabbitmq:3.8.3-debian-10-r76
     restart: on-failure
