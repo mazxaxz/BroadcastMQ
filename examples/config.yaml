@@ -1,0 +1,54 @@
+---
+# Example config file
+
+# # (optional)
+# livenessProbe:
+#   enabled: false
+#   path: /health
+# defaults:
+# livenessProbe.enabled: false
+# livenessProbe.path: /health
+
+# # (optional)
+readinessProbe:
+  enabled: true
+  path: /_meta/ready
+# defaults:
+# readinessProbe.enabled: false
+# readinessProbe.path: /ready
+
+### broadcasting section just for your configuration, takes array
+broadcasts:
+  - source:
+      connectionString: amqp://user:secret@rabbitmq-one:5672    # source connection string
+      exchange: MQ.Topic.Source.Exchange                        # exchange FROM where you want to broadcast messages (it is required to be of type: 'topic')
+      routingKey: MQ.RoutingKey                                 # routingKey of the event path that you want to subscribe to
+      # # (optional) default value below
+      # bmqQueueName: BMQ.Q.Broadcast.Broker                    # an internal BMQ queue for application (configurable) 
+    destination:
+      connectionString: amqp://user:secret@rabbitmq-two:5672    # destination connection string
+      # # (optional) default values below
+      # bmqExchange: BMQ.E.Broadcast.Topic                      # an internal BMQ exchange for application (configurable) 
+      # bmqRoutingKey: BMQ.Broker.Default                       # an internal BMQ routingKey for forwarding messages (configurable) 
+      # persistHeaders: false                                   # indicates application if you want to copy original headers to broadcasted message
+      queues:
+        - name: MQ.Queue.Destination.Example.1                  # name of the queue on which you want to broadcast TO
+          # # (optional) default values below
+          # bmqBindingKey: BMQ.Broker.#                         # an internal BMQ bindingKey (configurable) 
+          ensureExists: true                                    # indicates application either you want to create this queue if it does not exist or trust destination it exists
+        # # (optional) you can provide multiple queues
+        # - name: MQ.Queue.Destination.Example.2
+        #   ensureExists: true
+        # - name: MQ.Queue.Destination.Example.3
+
+  # # (optional) you can provide multiple broadcasts
+  # - source:
+  #     connectionString: amqp://user:secret@rabbitmq-two:15672
+  #     exchange: MQ.Topic.Source.Exchange
+  #     routingKey: MQ.RoutingKey
+  #   destination:
+  #     connectionString: amqp://user:secret@rabbitmq-one:15672
+  #     queues:
+  #       - name: MQ.Queue.Destination.Example.1
+  #         bmqBindingKey: BMQ.Broker.#
+  #         ensureExists: false
