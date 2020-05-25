@@ -35,7 +35,7 @@ broadcasts:
         - name: MQ.Queue.Destination.Example.1                  # name of the queue on which you want to broadcast TO
           # # (optional) default values below
           # bmqBindingKey: BMQ.Broker.#                         # an internal BMQ bindingKey (configurable) 
-          # ensureExists: false                                 # indicates application either you want to create this queue if it does not exist or trust destination it exists
+          ensureExists: true                                    # indicates application either you want to create this queue if it does not exist or trust destination it exists
         # # (optional) you can provide multiple queues
         # - name: MQ.Queue.Destination.Example.2
         #   ensureExists: true

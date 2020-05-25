@@ -1,0 +1,23 @@
+version: '3.5'
+
+networks:
+  bmq-vn:
+    external: 
+      name: bmq-vn
+
+services:
+  broadcast-mq:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    restart: on-failure
+    environment:
+      - BMQ_CONFIGPATH=/etc/broadcastmq/config.yaml
+      - BMQ_LOGLEVEL=info
+      - BMQ_OUTPUTTYPE=text
+    volumes:
+      - ./config.yaml:/etc/broadcastmq/config.yaml
+    networks:
+      - bmq-vn
+    ports:
+      - 9090:8080

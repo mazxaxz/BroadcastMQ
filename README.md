@@ -82,18 +82,23 @@ Having docker installed, you can just: `docker pull mazxaxz/broadcast-mq:latest`
 [Get docker](https://docs.docker.com/get-docker/)
 
 ### Installation
+```sh
+$ docker pull mazxaxz/broadcast-mq:latest
 
-1. `git clone https://github.com/mazxaxz/BroadcastMQ.git`
-2. `docker-compose -f ./examples/docker-compose.yaml up --build`
+$ docker run --rm -p 9090:8080 \
+  -v /foo/bar/config.yaml:/foo/config.yaml \
+  -e "BMQ_CONFIGPATH=/foo/config.yaml" \
+  --name bmq mazxaxz/broadcast-mq:latest
+```
 
 
 ### Configuration
 
 * environment variables
 ```
-BMQ_CONFIGPATH=<path>                                     default:"/etc/broadcastmq/config.yaml"
-BMQ_LOGLEVEL=(trace|debug|info|warn|error|fatal|panic)    default:"info"
-BMQ_OUTPUTTYPE=(text|json)                                default:"text"
+BMQ_CONFIGPATH=<path>                                     default:/etc/broadcastmq/config.yaml
+BMQ_LOGLEVEL=(trace|debug|info|warn|error|fatal|panic)    default:info
+BMQ_OUTPUTTYPE=(text|json)                                default:text
 ```
 
 * config file
@@ -107,10 +112,12 @@ Example using docker-compose can be seen [here](https://github.com/mazxaxz/Broad
 
 Steps:
 1. `git clone https://github.com/mazxaxz/BroadcastMQ.git`
-2. `docker-compose -f ./examples/docker-compose.yaml up --build`
-3. Go to `localhost:25673` and publish message onto `MQ.Topic.Source.Exchange` exchange with `MQ.RoutingKey` routing key
-4. Go to `localhost:35673`
-5. If `MQ.Queue.Destination.Example.1` queue contains the message you have published earlier, it means BroadcastMQ is working
+2. `docker-compose -f ./examples/docker-compose.resources.yaml up`
+3. Go to `localhost:25673` and create **topic** `MQ.Topic.Source.Exchange` exchange
+4. `docker-compose -f ./examples/docker-compose.app.yaml up --build`
+5. Go to `localhost:25673` and publish message onto `MQ.Topic.Source.Exchange` exchange with `MQ.RoutingKey` routing key
+6. Go to `localhost:35673`
+7. If `MQ.Queue.Destination.Example.1` queue contains the message you have published earlier, it means BroadcastMQ is working
 
 
 <!-- ROADMAP -->
