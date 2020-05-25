@@ -75,7 +75,7 @@ func (cfg *Config) LoadConfiguration(path string) error {
 
 	err = yaml.Unmarshal(b, cfg)
 	if err != nil {
-		return fmt.Errorf("File with path: '%s' could not beparsed. Error: %v", path, err)
+		return fmt.Errorf("File with path: '%s' could not be unmarshaled. Error: %v", path, err)
 	}
 
 	return nil
