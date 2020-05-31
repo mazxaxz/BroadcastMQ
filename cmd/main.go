@@ -49,7 +49,7 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	go func(c context.Context) {
-		bmq := &broadcast.Broadcast{Config: config.Broadcasts}
+		bmq := &broadcast.Broadcaster{Config: config.Broadcasts}
 		if err = bmq.Initialize(c, log); err != nil {
 			log.Fatal(err)
 		}

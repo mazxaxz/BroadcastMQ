@@ -1,8 +1,8 @@
 package environment
 
 import (
-	"fmt"
 	"github.com/kelseyhightower/envconfig"
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
 
@@ -14,9 +14,8 @@ type Settings struct {
 
 // LoadSettings loads environment variables into application runtime
 func (s *Settings) LoadSettings() error {
-	err := envconfig.Process("BMQ", s)
-	if err != nil {
-		return fmt.Errorf("An error occured while deserializing environment Settings: %v", err)
+	if err := envconfig.Process("BMQ", s); err != nil {
+		return errors.Wrap(err, "An error occured while deserializing environment Settings")
 	}
 
 	return nil
