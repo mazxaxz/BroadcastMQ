@@ -11,14 +11,14 @@ import (
 
 type Broadcaster struct {
 	Config  []config.Broadcast
-	Clients map[string]rabbitmq.Client
-	Logger  *logrus.Logger
+	clients map[string]rabbitmq.Client
+	logger  *logrus.Logger
 }
 
 // Initialize makes sure MQ clients are connected and source/destination resources are present
 func (b *Broadcaster) Initialize(ctx context.Context, log *logrus.Logger) error {
-	b.Clients = make(map[string]rabbitmq.Client, 0)
-	b.Logger = log
+	b.clients = make(map[string]rabbitmq.Client, 0)
+	b.logger = log
 
 	for _, bc := range b.Config {
 		client, err := b.addMqClient(ctx, bc.Source.ConnectionString)
@@ -45,13 +45,13 @@ func (b *Broadcaster) addMqClient(ctx context.Context, cs string) (rabbitmq.Clie
 	var client rabbitmq.Client
 	var err error
 
-	if _, exists := b.Clients[cs]; !exists {
-		client, err = rabbitmq.NewClient(ctx, cs, b.Logger)
+	if _, exists := b.clients[cs]; !exists {
+		client, err = rabbitmq.NewClient(ctx, cs, b.logger)
 		if err != nil {
 			return client, err
 		}
 
-		b.Clients[cs] = client
+		b.clients[cs] = client
 	}
 
 	return client, nil
@@ -65,11 +65,11 @@ func (b *Broadcaster) Start() {
 		go func(bc config.Broadcast) {
 			defer wg.Done()
 
-			if src, ok := b.Clients[bc.Source.ConnectionString]; ok {
-				b.Logger.Infof("Started broadcasting, '%s' === '%s' ===> *", bc.Source.Exchange, bc.Destination.BMQRoutingKey)
+			if src, ok := b.clients[bc.Source.ConnectionString]; ok {
+				b.logger.Infof("Started broadcasting, '%s' === '%s' ===> *", bc.Source.Exchange, bc.Destination.BMQRoutingKey)
 
 				if err := src.Consume(bc.Source.BMQQueueName, b.forward(bc.Destination)); err != nil {
-					b.Logger.Error(err)
+					b.logger.Error(err)
 				}
 			}
 		}(broadcast)
@@ -78,7 +78,7 @@ func (b *Broadcaster) Start() {
 }
 
 func (b *Broadcaster) forward(cfg config.Destination) func(msg amqp.Delivery) {
-	dest, ok := b.Clients[cfg.ConnectionString]
+	dest, ok := b.clients[cfg.ConnectionString]
 
 	return func(msg amqp.Delivery) {
 		if !ok {
