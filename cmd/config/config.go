@@ -1,9 +1,9 @@
 package config
 
 import (
-	"fmt"
 	"github.com/guiferpa/gody/v2"
 	"github.com/guiferpa/gody/v2/rule"
+	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"os"
@@ -59,13 +59,13 @@ func (cfg *Config) LoadConfiguration(path string) error {
 
 	file, err := os.OpenFile(path, os.O_RDONLY|os.O_CREATE, os.ModePerm)
 	if err != nil {
-		return fmt.Errorf("File with path: '%s' could not be opened. Error: %v", path, err)
+		return errors.Wrapf(err, "File with path: '%s' could not be opened", path)
 	}
 	defer file.Close()
 
 	b, err := ioutil.ReadAll(file)
 	if err != nil {
-		return fmt.Errorf("File with path: '%s' could not be read. Error: %v", path, err)
+		return errors.Wrapf(err, "File with path: '%s' could not be read", path)
 	}
 
 	if len(b) == 0 {
@@ -75,7 +75,7 @@ func (cfg *Config) LoadConfiguration(path string) error {
 
 	err = yaml.Unmarshal(b, cfg)
 	if err != nil {
-		return fmt.Errorf("File with path: '%s' could not be unmarshaled. Error: %v", path, err)
+		return errors.Wrapf(err, "File with path: '%s' could not be unmarshaled", path)
 	}
 
 	return nil
@@ -155,7 +155,7 @@ func ensurePath(path string, perm os.FileMode) error {
 
 	err := os.MkdirAll(strings.Join(dirs, separator), perm)
 	if err != nil {
-		return fmt.Errorf("Could not create directory: '%s'. Error: %v", path, err)
+		return errors.Wrapf(err, "Could not create directory: '%s'", path)
 	}
 
 	return nil

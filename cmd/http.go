@@ -1,9 +1,9 @@
 package main
 
 import (
-	"fmt"
 	"github.com/mazxaxz/BroadcastMQ/cmd/config"
 	"github.com/mazxaxz/BroadcastMQ/pkg/healthchecks"
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"net/http"
 )
@@ -29,7 +29,7 @@ func (h *Http) ServeHTTP() error {
 	}).Info("Starting server API Server")
 
 	if err := http.ListenAndServe(h.addr, nil); err != nil {
-		return fmt.Errorf("An error occured while starting HTTP server: %v", err)
+		return errors.Wrap(err, "An error occured while starting HTTP server")
 	}
 
 	return nil
