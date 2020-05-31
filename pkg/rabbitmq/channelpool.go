@@ -62,16 +62,12 @@ func (p *channelPool) release(ch *amqp.Channel) {
 }
 
 func disposePool(c context.Context, p *channelPool) {
-	for {
-		select {
-		case <-c.Done():
-			p.Lock()
-			for _, ch := range p.channels {
-				ch.Close()
-			}
-			p.Unlock()
+	<-c.Done()
 
-			return
-		}
+	p.Lock()
+	defer p.Unlock()
+
+	for _, ch := range p.channels {
+		ch.Close()
 	}
 }

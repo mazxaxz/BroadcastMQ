@@ -2,7 +2,7 @@ package rabbitmq
 
 import (
 	"context"
-	"fmt"
+	"github.com/pkg/errors"
 	"github.com/segmentio/ksuid"
 	"github.com/sirupsen/logrus"
 	"github.com/streadway/amqp"
@@ -24,7 +24,7 @@ func NewClient(ctx context.Context, uri string, log *logrus.Logger) (Client, err
 	var err error
 	client.connection, err = amqp.Dial(uri)
 	if err != nil {
-		return client, fmt.Errorf("Could not establish connection with RabbitMQ: %v", err)
+		return client, errors.Wrap(err, "Could not establish connection with RabbitMQ")
 	}
 
 	client.pool = newChannelPool(ctx, client.connection, 10, 10)
@@ -37,7 +37,7 @@ func NewClient(ctx context.Context, uri string, log *logrus.Logger) (Client, err
 func (c *Client) Consume(queueName string, callback func(delivery amqp.Delivery)) error {
 	ch, err := c.pool.get(c.connection)
 	if err != nil {
-		return fmt.Errorf("Could not establish channel connection: %v", err)
+		return errors.Wrap(err, "Could not establish channel connection")
 	}
 
 	consumerName := ksuid.New().String() + ".BroadcastMQ"
@@ -51,7 +51,7 @@ func (c *Client) Consume(queueName string, callback func(delivery amqp.Delivery)
 		nil,          // args
 	)
 	if err != nil {
-		return fmt.Errorf("Could not subscribe to queue: %v", err)
+		return errors.Wrap(err, "Could not subscribe to queue")
 	}
 
 	go func() {
@@ -67,7 +67,7 @@ func (c *Client) Consume(queueName string, callback func(delivery amqp.Delivery)
 func (c *Client) Publish(ex, key string, body []byte, headers map[string]interface{}) error {
 	ch, err := c.pool.get(c.connection)
 	if err != nil {
-		return fmt.Errorf("Could not establish channel connection: %v", err)
+		return errors.Wrap(err, "Could not establish channel connection")
 	}
 	defer c.pool.release(ch)
 
@@ -81,7 +81,7 @@ func (c *Client) Publish(ex, key string, body []byte, headers map[string]interfa
 			Headers: headers,
 		})
 	if err != nil {
-		return fmt.Errorf("Could not publish message: %v", err)
+		return errors.Wrap(err, "Could not publish message")
 	}
 
 	return nil
