@@ -45,14 +45,16 @@ func (b *Broadcaster) addMqClient(ctx context.Context, cs string) (rabbitmq.Clie
 	var client rabbitmq.Client
 	var err error
 
-	if _, exists := b.clients[cs]; !exists {
-		client, err = rabbitmq.NewClient(ctx, cs, b.logger)
-		if err != nil {
-			return client, err
-		}
-
-		b.clients[cs] = client
+	if c, exists := b.clients[cs]; exists {
+		return c, nil
 	}
+
+	client, err = rabbitmq.NewClient(ctx, cs, b.logger)
+	if err != nil {
+		return client, err
+	}
+
+	b.clients[cs] = client
 
 	return client, nil
 }
