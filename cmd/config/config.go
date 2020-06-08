@@ -36,7 +36,7 @@ type Source struct {
 
 type Destination struct {
 	ConnectionString string  `yaml:"connectionString" validate:"not_empty"`
-	BMQExchange      string  `yaml:"bmqExcahnge"`
+	BMQExchange      string  `yaml:"bmqExchange"`
 	BMQRoutingKey    string  `yaml:"bmqRoutingKey"`
 	Queues           []Queue `yaml:"queues"`
 	PersistHeaders   bool    `yaml:"persistHeaders"`
